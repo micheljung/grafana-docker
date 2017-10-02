@@ -3,13 +3,15 @@
 : "${GF_PATHS_DATA:=/var/lib/grafana}"
 : "${GF_PATHS_LOGS:=/var/log/grafana}"
 : "${GF_PATHS_PLUGINS:=/var/lib/grafana/plugins}"
+: "${GRAFANA_USER:=grafana}"
+: "${GRAFANA_GROUP:=grafana}"
 
-chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_LOGS"
-chown -R grafana:grafana /etc/grafana
+chown -R ${GRAFANA_USER}:${GRAFANA_GROUP} "$GF_PATHS_DATA" "$GF_PATHS_LOGS"
+chown -R ${GRAFANA_USER}:${GRAFANA_GROUP} /etc/grafana
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
-    mkdir -p ~grafana/.aws/
-    touch ~grafana/.aws/credentials
+    mkdir -p ~${GRAFANA_USER}/.aws/
+    touch ~${GRAFANA_USER}/.aws/credentials
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
@@ -17,17 +19,17 @@ if [ ! -z ${GF_AWS_PROFILES+x} ]; then
         region_varname="GF_AWS_${profile}_REGION"
 
         if [ ! -z "${!access_key_varname}" -a ! -z "${!secret_key_varname}" ]; then
-            echo "[${profile}]" >> ~grafana/.aws/credentials
-            echo "aws_access_key_id = ${!access_key_varname}" >> ~grafana/.aws/credentials
-            echo "aws_secret_access_key = ${!secret_key_varname}" >> ~grafana/.aws/credentials
+            echo "[${profile}]" >> ~${GRAFANA_USER}/.aws/credentials
+            echo "aws_access_key_id = ${!access_key_varname}" >> ~${GRAFANA_USER}/.aws/credentials
+            echo "aws_secret_access_key = ${!secret_key_varname}" >> ~${GRAFANA_USER}/.aws/credentials
             if [ ! -z "${!region_varname}" ]; then
-                echo "region = ${!region_varname}" >> ~grafana/.aws/credentials
+                echo "region = ${!region_varname}" >> ~${GRAFANA_USER}/.aws/credentials
             fi
         fi
     done
 
-    chown grafana:grafana -R ~grafana/.aws
-    chmod 600 ~grafana/.aws/credentials
+    chown ${GRAFANA_USER}:${GRAFANA_GROUP} -R ~${GRAFANA_USER}/.aws
+    chmod 600 ~${GRAFANA_USER}/.aws/credentials
 fi
 
 if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
@@ -39,7 +41,7 @@ if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
   done
 fi
 
-exec gosu grafana /usr/sbin/grafana-server      \
+exec gosu ${GRAFANA_USER} /usr/sbin/grafana-server      \
   --homepath=/usr/share/grafana                 \
   --config=/etc/grafana/grafana.ini             \
   cfg:default.log.mode="console"                \
