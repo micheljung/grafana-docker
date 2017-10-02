@@ -3,9 +3,11 @@
 : "${GF_PATHS_DATA:=/var/lib/grafana}"
 : "${GF_PATHS_LOGS:=/var/log/grafana}"
 : "${GF_PATHS_PLUGINS:=/var/lib/grafana/plugins}"
+: "${GRAFANA_USER:=grafana}"
+: "${GRAFANA_GROUP:=grafana}"
 
-chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_LOGS"
-chown -R grafana:grafana /etc/grafana
+chown -R ${GRAFANA_USER}:${GRAFANA_GROUP} "$GF_PATHS_DATA" "$GF_PATHS_LOGS"
+chown -R ${GRAFANA_USER}:${GRAFANA_GROUP} /etc/grafana
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
     mkdir -p ~grafana/.aws/
@@ -26,7 +28,7 @@ if [ ! -z ${GF_AWS_PROFILES+x} ]; then
         fi
     done
 
-    chown grafana:grafana -R ~grafana/.aws
+    chown ${GRAFANA_USER}:${GRAFANA_GROUP} -R ~grafana/.aws
     chmod 600 ~grafana/.aws/credentials
 fi
 
@@ -39,7 +41,7 @@ if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
   done
 fi
 
-exec gosu grafana /usr/sbin/grafana-server      \
+exec gosu ${GRAFANA_USER} /usr/sbin/grafana-server      \
   --homepath=/usr/share/grafana                 \
   --config=/etc/grafana/grafana.ini             \
   cfg:default.log.mode="console"                \
